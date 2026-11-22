@@ -13,6 +13,7 @@ library(tidyverse)
 library(scales)
 
 source("utils/tema_tp.R")
+source("utils/fuente_tp.R")
 source("utils/guardar_grafico.R")
 
 provincias_espacios <- read_csv("input/provincias_espacios.csv", show_col_types = FALSE)
@@ -81,7 +82,7 @@ g_distribucion <- ggplot(datos_grafico, aes(x = pct, y = espacio, colour = anio)
     subtitle = "% de votos positivos por provincia. Cada punto es una provincia; la caja va del primer al tercer cuartil.",
     x        = "% de votos positivos",
     y        = NULL,
-    caption  = fuente_tp
+    caption  = fuente_tp()
   ) +
   tema_tp()
 

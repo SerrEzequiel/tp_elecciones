@@ -4,8 +4,8 @@
 # 2019-2023, con PCA para visualizar. Incluye la elección de k, la comparación
 # con un clustering jerárquico (Ward) y la repetición sin provincias atípicas.
 #
-# Lee:     input/provincias_matriz.csv   (script 03)
-#          output/tablas/03_outliers.csv (script 03)
+# Lee:     input/provincias_matriz.csv     (script 03)
+#          input/provincias_atipicas.csv   (script 03)
 # Guarda:  output/tablas/05_eleccion_k.csv
 #          output/tablas/05_grupos.csv
 #          output/tablas/05_perfil_grupos.csv
@@ -23,13 +23,14 @@ library(ggrepel)
 library(patchwork)
 
 source("utils/tema_tp.R")
+source("utils/fuente_tp.R")
+source("utils/etiqueta_variable.R")
 source("utils/guardar_grafico.R")
 
 matriz <- read_csv("input/provincias_matriz.csv", show_col_types = FALSE) |>
   column_to_rownames("provincia")
 
-provincias_atipicas <- read_csv("output/tablas/03_outliers.csv", show_col_types = FALSE) |>
-  distinct(provincia) |>
+provincias_atipicas <- read_csv("input/provincias_atipicas.csv", show_col_types = FALSE) |>
   pull(provincia)
 
 # Estandarización z-score: la izquierda ronda pocos puntos y el peronismo decenas;
@@ -74,8 +75,8 @@ g_silhouette <- ggplot(eleccion_k, aes(k, silhouette_media)) +
   geom_point(aes(colour = k == k_elegido), size = 2.5, show.legend = FALSE) +
   scale_colour_manual(values = c("FALSE" = "grey50", "TRUE" = "#0072B2")) +
   scale_y_continuous(labels = label_number(accuracy = 0.001, decimal.mark = ",")) +
-  labs(title = "Silhouette media (más alta = mejor)",
-       x = "Cantidad de grupos (k)", y = "Silhouette media") +
+  labs(title = "Silueta media (más alta = mejor)",
+       x = "Cantidad de grupos (k)", y = "Silueta media (silhouette)") +
   tema_tp() +
   theme(plot.title = element_text(size = 11), plot.title.position = "panel")
 
@@ -83,7 +84,7 @@ g_eleccion_k <- (g_codo | g_silhouette) +
   plot_annotation(
     title    = "Elección de la cantidad de grupos: k = 3",
     subtitle = "k-means sobre 24 provincias y 10 variables estandarizadas. En azul, el k elegido. Los ejes verticales no empiezan en cero.",
-    caption  = fuente_tp,
+    caption  = fuente_tp(),
     theme    = tema_tp()
   )
 
@@ -100,9 +101,9 @@ perfil_crudo <- as_tibble(matriz, rownames = "provincia") |>
   group_by(cluster) |>
   summarise(n = n(), across(where(is.numeric), mean), .groups = "drop")
 
-id_persistente <- perfil_crudo$cluster[which.max(perfil_crudo$`Peronismo 2023`)]
-id_bicoalicion <- perfil_crudo$cluster[which.min(abs(perfil_crudo$`Peronismo 2019` -
-                                                     perfil_crudo$`JxC 2019`))]
+id_persistente <- perfil_crudo$cluster[which.max(perfil_crudo$peronismo_2023)]
+id_bicoalicion <- perfil_crudo$cluster[which.min(abs(perfil_crudo$peronismo_2019 -
+                                                     perfil_crudo$jxc_2019))]
 id_cambio      <- setdiff(1:3, c(id_persistente, id_bicoalicion))
 
 nombres_grupo <- tibble(
@@ -174,13 +175,14 @@ contornos <- puntos |> group_by(etiqueta) |> slice(chull(PC1, PC2)) |> ungroup()
 
 escala <- 0.85 * max(abs(pca$x[, 1:2])) / max(abs(pca$rotation[, 1:2]))
 flechas <- as_tibble(pca$rotation[, 1:2] * escala, rownames = "variable") |>
-  mutate(anio = str_extract(variable, "\\d{4}"))
+  mutate(anio     = str_extract(variable, "\\d{4}"),
+         etiqueta = etiqueta_variable(variable))
 
 # Rótulos de provincias y de flechas en una sola capa, para que no se pisen
 rotulos <- bind_rows(
   transmute(puntos, x = PC1, y = PC2, texto = provincia, estilo = "plain",
             color = "grey10", tam = 2.9, linea = "grey50"),
-  transmute(flechas, x = PC1 * 1.06, y = PC2 * 1.06, texto = variable,
+  transmute(flechas, x = PC1 * 1.06, y = PC2 * 1.06, texto = etiqueta,
             estilo = "italic", color = "grey35", tam = 2.55, linea = "grey70")
 )
 
@@ -218,11 +220,10 @@ g_exploratorio <- ggplot() +
     ),
     x = paste0("Componente principal 1 (", coma(var_exp[1]), "% de la varianza)"),
     y = paste0("Componente principal 2 (", coma(var_exp[2]), "% de la varianza)"),
-    caption = paste0(
-      fuente_tp,
-      "\nEspacios: Peronismo (FdT / UxP), JxC, Derecha liberal (Unite + NOS / LLA), ",
+    caption = fuente_tp(paste0(
+      "Espacios: Peronismo (FdT / UxP), JxC, Derecha liberal (Unite + NOS / LLA), ",
       "Tercera vía (Consenso Federal / Hacemos), Izquierda (FIT-U)."
-    )
+    ))
   ) +
   guides(colour = guide_legend(order = 1, ncol = 1),
          shape  = guide_legend(order = 1, ncol = 1),

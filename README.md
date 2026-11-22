@@ -32,6 +32,20 @@ Preguntas de trabajo:
 
 Todos los porcentajes se calculan sobre **votos positivos** (sin blancos ni nulos).
 
+### Variables utilizadas
+
+| Variable | Descripción | Tipo | Faltantes |
+|---|---|---|---|
+| `anio` | Año de la elección (2019 o 2023) | Numérica | 0 |
+| `provincia` | Distrito electoral (24: 23 provincias y CABA) | Categórica | 0 |
+| `espacio` | Espacio político: Peronismo, JxC, Derecha liberal, Tercera vía, Izquierda | Categórica | 0 |
+| `votos` | Votos positivos del espacio en la provincia | Numérica (votos) | 0 |
+| `pct` | Votos del espacio / votos positivos de la provincia × 100 | Numérica (%) | 0 |
+| `electores` | Electores habilitados | Numérica (personas) | 0 |
+| `participacion` | Votos emitidos / electores × 100 | Numérica (%) | 0 |
+| `pct_blancos`, `pct_nulos` | Votos en blanco o nulos / votos emitidos × 100 | Numérica (%) | 0 |
+| `peronismo_2019` … `izquierda_2023` | `pct` de cada espacio en cada año, en formato ancho (10 variables del clustering) | Numérica (%) | 0 |
+
 ## Estructura del repositorio
 
 ```
@@ -51,7 +65,7 @@ tp_elecciones/
 ## Cómo reproducir el análisis
 
 1. Descargar o clonar el repositorio y abrir **`tp_elecciones.Rproj`** con RStudio (así todas las rutas son relativas a la carpeta del proyecto).
-2. Instalar una sola vez los paquetes necesarios:
+2. Instalar una sola vez los paquetes necesarios (probado con R 4.2 o superior y ggrepel 0.9 o superior):
 
    ```r
    install.packages(c("tidyverse", "scales", "ggrepel", "cluster", "patchwork"))
@@ -65,25 +79,28 @@ tp_elecciones/
 | `00b_resumen_mesas_2023.R` | **Opcional.** Resume el archivo de la DINE 2023 por mesa (1 GB, no está en el repo) a nivel provincia | `raw/2023_crudo/` | `raw/presi_2023.csv` |
 | `01_limpieza_base_provincial.R` | Une 2019 y 2023, limpia los nombres de las listas, asigna espacios y calcula el % de cada espacio y los totales por provincia | `raw/`, `auxiliar/` | `input/provincias_espacios.csv`, `input/provincias_totales.csv` |
 | `02_descriptivas.R` | Estadísticas descriptivas por espacio y año, participación, blancos y nulos | `input/` | `output/tablas/02_*.csv`, `output/graficos/02_distribucion_espacios.jpg` |
-| `03_faltantes_outliers.R` | Diagnóstico de faltantes, outliers por z-score (\|z\| > 2,5), decisión y descriptivas con y sin atípicos | `raw/`, `input/` | `output/tablas/03_*.csv`, `output/graficos/03_outliers_zscore.jpg`, `input/provincias_matriz.csv` |
+| `03_faltantes_outliers.R` | Diagnóstico de faltantes, outliers por z-score (\|z\| > 2,5), decisión y descriptivas con y sin atípicos | `raw/`, `input/` | `output/tablas/03_*.csv`, `output/graficos/03_outliers_zscore.jpg`, `input/provincias_matriz.csv`, `input/provincias_atipicas.csv` |
 | `04_chi_cuadrado_departamentos.R` | *(pendiente)* Test Chi cuadrado ganador 2019 × ganador 2023 por departamento | | |
-| `05_clustering_pca.R` | Elección de k (codo y silhouette), k-means con k = 3, robustez (Ward y sin atípicos) y PCA | `input/provincias_matriz.csv`, `output/tablas/03_outliers.csv` | `output/tablas/05_*.csv`, `output/graficos/05_*.jpg`, `input/provincias_grupos.csv` |
+| `05_clustering_pca.R` | Elección de k (codo y silueta), k-means con k = 3, robustez (Ward y sin atípicos) y PCA. Genera el gráfico exploratorio de la instancia 3 | `input/provincias_matriz.csv`, `input/provincias_atipicas.csv` | `output/tablas/05_*.csv`, `output/graficos/05_*.jpg`, `input/provincias_grupos.csv` |
 
 Los scripts `00a` y `00b` no hace falta correrlos: sus resultados ya están en `raw/`.
 
 ### Funciones propias (`utils/`)
 
-| Función | Para qué | Se usa en |
-|---|---|---|
-| `limpiar_nombre_lista()` | Unifica cómo está escrito el nombre de cada lista | 01 |
-| `tema_tp()` y `fuente_tp` | Tema de ggplot y nota de fuente comunes a todos los gráficos | 02, 03, 05 |
-| `guardar_grafico()` | Exporta con `ggsave()` a JPG, 300 dpi, 22 cm de ancho | 02, 03, 05 |
+| Archivo | Función | Para qué | Se usa en |
+|---|---|---|---|
+| `limpiar_nombre_lista.R` | `limpiar_nombre_lista()` | Unifica cómo está escrito el nombre de cada lista | 01 |
+| `nombre_variable.R` | `nombre_variable()` | Arma el nombre interno de una variable (`tercera_via_2019`) | 03 |
+| `etiqueta_variable.R` | `etiqueta_variable()` | Traduce el nombre interno al texto de los gráficos (`Tercera vía 2019`) | 03, 05 |
+| `tema_tp.R` | `tema_tp()` | Tema de ggplot común a todos los gráficos | 02, 03, 05 |
+| `fuente_tp.R` | `fuente_tp()` | Nota de fuente al pie de todos los gráficos | 02, 03, 05 |
+| `guardar_grafico.R` | `guardar_grafico()` | Exporta con `ggsave()` a JPG, 300 dpi, 22 cm de ancho | 02, 03, 05 |
 
 ## Análisis realizado
 
 1. **Limpieza y descriptivas.** 24 provincias × 2 elecciones × 5 espacios. No hay valores faltantes en las variables usadas.
 2. **Outliers.** Se detectaron valores atípicos (\|z\| > 2,5) en 4 provincias: Córdoba (Tercera vía 2023 y JxC 2019), Santiago del Estero, CABA y Salta. Son resultados genuinos, no errores de carga, por lo que se mantienen; se muestra cómo cambian las descriptivas sin ellos.
-3. **Clustering.** k-means con k = 3 (50 inicios, variables estandarizadas). Los grupos explican el 44,3 % de la varianza; silhouette media 0,25 (estructura débil). Ward coincide en 23 de 24 provincias.
+3. **Clustering.** k-means con k = 3 (50 inicios, variables estandarizadas). Los grupos explican el 44,3 % de la varianza; silueta media 0,25 (estructura débil). Ward coincide en 23 de 24 provincias.
 
 ## Conclusiones principales
 

@@ -22,9 +22,3 @@ tema_tp <- function(tamanio_base = 10.5) {
     )
 }
 
-# Texto de fuente que se repite en todos los gráficos
-fuente_tp <- paste0(
-  "Fuente: elaboración propia en base a la Dirección Nacional Electoral (DINE): ",
-  "escrutinio definitivo 2019 (compilado por electorAr) y provisorio 2023.\n",
-  "Elecciones generales, cargo presidente, primera vuelta. Porcentajes sobre votos positivos."
-)
