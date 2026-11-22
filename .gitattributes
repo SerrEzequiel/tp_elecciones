@@ -1,0 +1,7 @@
+# Normaliza los fines de línea para que el repo funcione igual en Windows, Mac y Linux
+* text=auto
+*.R text eol=lf
+*.csv text eol=lf
+*.md text eol=lf
+*.jpg binary
+*.xlsx binary
