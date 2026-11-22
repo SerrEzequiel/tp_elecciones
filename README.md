@@ -1,6 +1,6 @@
 # Estabilidad y competitividad electoral en las provincias argentinas
 
-Trabajo práctico final de **Ciencia de Datos** (FCE-UBA, 2.º cuatrimestre 2026) · **Grupo 07**
+Trabajo práctico final de **Ciencia de Datos** (FCE-UBA, 2.º cuatrimestre 2026) · *Grupo 07*
 
 ## Integrantes
 
