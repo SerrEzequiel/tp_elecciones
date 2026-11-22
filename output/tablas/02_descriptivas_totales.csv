@@ -1,0 +1,7 @@
+variable,anio,media,mediana,desvio,minimo,maximo
+participacion,2019,80,80.5,2.7,74.6,86
+participacion,2023,75.9,76.3,2.7,70.1,81.7
+pct_blancos,2019,2.8,1.2,4.9,0.6,21.7
+pct_blancos,2023,2,1.5,1.4,0.8,6.1
+pct_nulos,2019,1,1,0.4,0.4,1.8
+pct_nulos,2023,1,0.9,0.4,0.5,1.7
